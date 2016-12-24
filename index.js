@@ -59,15 +59,28 @@ class Parameterize {
 			if (typeof condition === 'string' || condition instanceof String) {
 				hold = safeEval(condition, this.context);
 			} else {
+
 				var err = new Error("invalid construct");
 				err.message = "$if construct must be a string which eval can process";
 				throw err;
 			}
 
 			if (hold) {
-				template[key] = template[key]["$then"];
+				var hence = template[key]["$then"];
+				if (typeof hence === 'string' || hence instanceof String) {
+					template[key] = this._replace(hence);
+				} else {
+					this._render(hence);
+					template[key] = hence;
+				}
 			} else {
-				template[key] = template[key]["$else"];
+				var hence = template[key]["$else"];
+				if (typeof hence === 'string' || hence instanceof String) {
+					template[key] = this._replace(hence);
+				} else {
+					this._render(hence);
+					template[key] = hence;
+				}
 			}
 		} else if (template[key]["$switch"]) {
 			var condition = template[key]["$switch"];
@@ -98,7 +111,6 @@ class Parameterize {
 	_replace(parameterizedString) {
 		var match = this.PARSEEXPR.exec(parameterizedString);
 		if (match) {
-			//var replacementValue = this._fetchContextPropertyValue(match[1]);
 			var replacementValue = safeEval(match[1].trim(), this.context);
 			return parameterizedString.replace(this.PARSEEXPR, replacementValue);
 		}

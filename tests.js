@@ -36,12 +36,12 @@ suite("Parameterize", function() {
     });
 
     test("Modify string", function() {
-      var template = {
+      let template = {
         key1:     "{{ toUpper( 'hello world') }}",
         key2:     "{{  toLower(toUpper('hello world'))   }}",
         key3:     "{{   toLower(  toUpper(  text))  }}",
       };
-      var context = {
+      let context = {
         toUpper: function(text) {
           return text.toUpperCase();
         },
@@ -50,7 +50,7 @@ suite("Parameterize", function() {
         },
         text: 'hello World'
       };
-      var output = {
+      let output = {
         key1:     "HELLO WORLD",
         key2:     "hello world",
         key3:     "hello world"
@@ -177,7 +177,7 @@ suite("Parameterize", function() {
     });
 
     test("eval with multiple function evaluations", function() {
-        var template = {
+        let template = {
         value: [
           {$eval: 'func(0)'},
           {$eval: 'func(0)'},
@@ -191,17 +191,134 @@ suite("Parameterize", function() {
           {$eval: 'func(1+1)'}
         ]
       };
-      var i = 0;
-      var context = {
+      let i = 0;
+      let context = {
       'func':  function(x) { i += 1; return x + i; }
       };
-      var output = {
+      let output = {
         value: [1, 2, 2, 2, 5, 6, 7, 8, 9, 12]
       };
       let par = new Parameterize(template, context);
       par.render();
       assume(par.getTemplate()).deep.equals(output);
     });
+
+    test("nested if (then --> then) construct", function() {
+      let template = {
+        val: {
+          $if: "key1 > key2",
+          $then: {
+            b: {
+              $if: "key3 > key4",
+              $then: "{{ foo }}",
+              $else: "{{ bar }}"
+            }
+          },
+          $else: {b: "failed"}
+        }
+      };
+
+      let context = {key1: 2, key2: 1, key3: 4, key4: 3, foo: "a", bar: "b"};
+
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.getTemplate()).deep.equals({val: {b: "a"}});
+    });
+
+    test("nested if (else --> else) construct", function() {
+      let template = {
+        val: {
+          $if: "key1 < key2",
+          $else: {
+            b: {
+              $if: "key3 < key4",
+              $then: "{{ foo }}",
+              $else: "{{ bar }}"
+            }
+          },
+          $then: {b: "failed"}
+        }
+      };
+
+      let context = {key1: 2, key2: 1, key3: 4, key4: 3, foo: "a", bar: "b"};
+
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.getTemplate()).deep.equals({val: {b: "b"}});
+    });
+
+    test("nested if (then --> else) construct", function() {
+      let template = {
+        val: {
+          $if: "key1 > key2",
+          $then: {
+            b: {
+              $if: "key3 < key4",
+              $then: "{{ foo }}",
+              $else: "{{ bar }}"
+            }
+          },
+          $else: {b: "failed"}
+        }
+      };
+
+      let context = {key1: 2, key2: 1, key3: 4, key4: 3, foo: "a", bar: "b"};
+
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.getTemplate()).deep.equals({val: {b: "b"}});
+    });
+
+    test("nested if (else --> then) construct", function() {
+      let template = {
+        val: {
+          $if: "key1 < key2",
+          $else: {
+            b: {
+              $if: "key3 > key4",
+              $then: "{{ foo }}",
+              $else: "{{ bar }}"
+            }
+          },
+          $then: {b: "failed"}
+        }
+      };
+
+      let context = {key1: 2, key2: 1, key3: 4, key4: 3, foo: "a", bar: "b"};
+
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.getTemplate()).deep.equals({val: {b: "a"}});
+    });
+
+    test("nested if (else --> then ---> else) construct", function() {
+      let template = {
+        val: {
+          $if: "key1 < key2",
+          $else: {
+            b: {
+              $if: "key3 > key4",
+              $then: {
+                c: {
+                  $if: "key5 < key6",
+                  $then: "abc",
+                  $else: "{{ bar }}"
+                }
+              },
+              $else: "follow"
+            }
+          },
+          $then: {b: "failed"}
+        }
+      };
+
+      let context = {key1: 2, key2: 1, key3: 4, key4: 3, key5: 6, key6: 5, foo: "a", bar: "b"};
+
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.getTemplate()).deep.equals({val: {b: {c: "b"}}});
+    });
+
   });
 
   suite("interface tests", function() {
@@ -211,7 +328,7 @@ suite("Parameterize", function() {
       c2 = {a: {b: "c"}};
       c3 = {d: {e: "f"}};
       
-      var par = new Parameterize(c1, {});
+      let par = new Parameterize(c1, {});
       assume(par.getTemplate()).deep.equals(c1);
       
       par.setNewTemplate(c2);
@@ -229,7 +346,7 @@ suite("Parameterize", function() {
       c2 = {a: {b: "c"}};
       c3 = {d: {e: "f"}};
       
-      var par = new Parameterize({}, c1);
+      let par = new Parameterize({}, c1);
       assume(par.getContext()).deep.equals(c1);
       
       par.setNewContext(c2);
