@@ -125,5 +125,57 @@ suite("Parameterize", function() {
       par.render();
       assume(par.gettemplate()).deep.equals({b: {a: "b"}});
     });
-  })
+
+    test("switch with only one option", function() {
+      let template = {
+        a: {
+          $switch: "'case' + a",
+          case1: "foo"
+        }};
+      let context = {a: "1"};
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.gettemplate()).deep.equals({a: "foo"});
+    });
+
+    test("switch with multiple options", function() {
+      let template = {
+        a: {
+          $switch: "'case' + b",
+          case1: "foo",
+          case2: "bar"
+        }};
+      let context = {a: "1", b: "2"};
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.gettemplate()).deep.equals({a: "bar"});
+    });
+
+    test("eval with multiple function evaluations", function() {
+        var template = {
+        value: [
+          {$eval: 'func(0)'},
+          {$eval: 'func(0)'},
+          {$eval: 'func(-1)'},
+          {$eval: 'func(-2)'},
+          {$eval: 'func(0)'},
+          {$eval: 'func(0)'},
+          {$eval: 'func(0)'},
+          {$eval: 'func(0)'},
+          {$eval: 'func(0)'},
+          {$eval: 'func(1+1)'}
+        ]
+      };
+      var i = 0;
+      var context = {
+      'func':  function(x) { i += 1; return x + i; }
+      };
+      var output = {
+        value: [1, 2, 2, 2, 5, 6, 7, 8, 9, 12]
+      };
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.gettemplate()).deep.equals(output);
+    });
+  });
 });

@@ -68,6 +68,26 @@ class Parameterize {
 			} else {
 				template[key] = template[key]["$else"];
 			}
+		} else if (template[key]["$switch"]) {
+			var condition = template[key]["$switch"];
+			var case_option;
+			if (typeof condition === 'string' || condition instanceof String) {
+				case_option = safeEval(condition, this.context);
+			} else {
+				var err = new Error("invalid construct");
+				err.message = "$switch construct must be a string which eval can process";
+				throw err;
+			}
+			template[key] = template[key][case_option];
+		} else if (template[key]["$eval"]) {
+			var expression = template[key]["$eval"];
+			if (typeof expression === 'string' || expression instanceof String) {
+				template[key] = safeEval(expression, this.context);
+			} else {
+				var err = new Error("invalid construct");
+				err.message = "$eval construct must be a string which eval can process";
+				throw err;
+			}
 		} else {
 			this._render(template[key]);
 		}
