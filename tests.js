@@ -21,16 +21,18 @@ suite("Parameterize", function() {
 
     test("function evaluation", function() {
       let template = {
-        name: "{{ func('jim') }}"
+        name: "{{ func('jim') }}",
+        username: "{{ func(a) }}",
       }
       let context = {
+        a: "foobar",
         func: function(value) {
           return value;
         }
       }
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({name: "jim"});
+      assume(par.gettemplate()).deep.equals({name: "jim", username: "foobar"});
     });
   });
 
@@ -65,4 +67,63 @@ suite("Parameterize", function() {
       assume(par.gettemplate()).deep.equals(template);
     });
   });
+
+
+  suite("constructs", function() {
+    test("if -> then non-deep", function() {
+      let template = {
+        a: {
+          $if: "1 < 2",
+          $then: "a",
+          $else: "b"
+        }
+      };
+      let context = {};
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.gettemplate()).deep.equals({a: "a"});
+    });
+
+    test("if -> else non-deep", function() {
+      let template = {
+        a: {
+          $if: "1 > 2",
+          $then: "a",
+          $else: "b"
+        }
+      };
+      let context = {};
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.gettemplate()).deep.equals({a: "b"});
+    });
+
+    test("if -> then deep", function() {
+      let template = {
+        b: {a: {
+          $if: "1 < 2",
+          $then: "a",
+          $else: "b"
+        }}
+      };
+      let context = {};
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.gettemplate()).deep.equals({b : {a: "a"}});
+    });
+
+    test("if -> else deep", function() {
+      let template = {
+        b: {a: {
+          $if: "1 > 2",
+          $then: "a",
+          $else: "b"
+        }}
+      };
+      let context = {};
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.gettemplate()).deep.equals({b: {a: "b"}});
+    });
+  })
 });

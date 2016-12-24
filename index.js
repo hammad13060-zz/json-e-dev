@@ -1,5 +1,3 @@
-/* Inspired from  */
-
 var safeEval = require("notevil")
 
 class Parameterize {
@@ -9,6 +7,7 @@ class Parameterize {
 		this.context = context;
 	}
 
+	/* private */
 	_attachArrayAccessor(context) {
 		for (var key in context) {
 			if (context.hasOwnProperty(key)) {
@@ -24,6 +23,7 @@ class Parameterize {
 		}
 	}
 
+	/* private */
 	_generateArrayAccessorFunc(context) {
 		return function(index) {
 			return context[index];
@@ -44,9 +44,32 @@ class Parameterize {
 				if (typeof value === 'string' || value instanceof String) {
 					template[key] = this._replace(template[key]);
 				} else {
-					this._render(template[key]);
+					this._handleConstructs(template, key);
 				}
 			}
+		}
+	}
+
+	/* private */
+	_handleConstructs(template, key) {
+		if (template[key]["$if"]) {
+			var condition = template[key]["$if"];
+			var hold = undefined;
+			if (typeof condition === 'string' || condition instanceof String) {
+				hold = safeEval(condition, this.context);
+			} else {
+				var err = new Error("invalid construct");
+				err.message = "$if construct must be a string which eval can process";
+				throw err;
+			}
+
+			if (hold) {
+				template[key] = template[key]["$then"];
+			} else {
+				template[key] = template[key]["$else"];
+			}
+		} else {
+			this._render(template[key]);
 		}
 	}
 
@@ -56,12 +79,6 @@ class Parameterize {
 		if (match) {
 			//var replacementValue = this._fetchContextPropertyValue(match[1]);
 			var replacementValue = safeEval(match[1].trim(), this.context);
-			/*if (match[0] === parameterizedString) {
-				return replacementValue;
-			} else {
-				return parameterizedString.replace(this.PARSEEXPR, replacementValue);
-			}
-			return replacementValue;*/
 			return parameterizedString.replace(this.PARSEEXPR, replacementValue);
 		}
 		return parameterizedString;
