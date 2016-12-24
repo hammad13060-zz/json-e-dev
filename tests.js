@@ -8,7 +8,7 @@ suite("Parameterize", function() {
       let context = { clientId: "123"};
       let engine = new Parameterize(template, context);
       engine.render();
-      assume(engine.gettemplate()).deep.equals({id: "123"});
+      assume(engine.getTemplate()).deep.equals({id: "123"});
     });
 
     test("with array access", function() {
@@ -16,7 +16,7 @@ suite("Parameterize", function() {
       let context = {arr: ["123", 248, "doodle"],}
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({id: "123", name: "doodle", count: "248"}); 
+      assume(par.getTemplate()).deep.equals({id: "123", name: "doodle", count: "248"}); 
     });
 
     test("function evaluation", function() {
@@ -32,8 +32,33 @@ suite("Parameterize", function() {
       }
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({name: "jim", username: "foobar"});
+      assume(par.getTemplate()).deep.equals({name: "jim", username: "foobar"});
     });
+
+    test("Modify string", function() {
+      var template = {
+        key1:     "{{ toUpper( 'hello world') }}",
+        key2:     "{{  toLower(toUpper('hello world'))   }}",
+        key3:     "{{   toLower(  toUpper(  text))  }}",
+      };
+      var context = {
+        toUpper: function(text) {
+          return text.toUpperCase();
+        },
+        toLower: function(text) {
+          return text.toLowerCase();
+        },
+        text: 'hello World'
+      };
+      var output = {
+        key1:     "HELLO WORLD",
+        key2:     "hello world",
+        key3:     "hello world"
+      };
+      let par = new Parameterize(template, context);
+      par.render();
+      assume(par.getTemplate()).deep.equals(output)
+  });
   });
 
   suite("deep propert access", function() {
@@ -46,7 +71,7 @@ suite("Parameterize", function() {
       };
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({image_version: "12.10", name: "ubuntu"});
+      assume(par.getTemplate()).deep.equals({image_version: "12.10", name: "ubuntu"});
     });
   });
 
@@ -56,7 +81,7 @@ suite("Parameterize", function() {
       let context = {};
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({});
+      assume(par.getTemplate()).deep.equals({});
     });
 
     test("non parameterized template", function() {
@@ -64,7 +89,7 @@ suite("Parameterize", function() {
       let context = {};
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals(template);
+      assume(par.getTemplate()).deep.equals(template);
     });
   });
 
@@ -81,7 +106,7 @@ suite("Parameterize", function() {
       let context = {};
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({a: "a"});
+      assume(par.getTemplate()).deep.equals({a: "a"});
     });
 
     test("if -> else non-deep", function() {
@@ -95,7 +120,7 @@ suite("Parameterize", function() {
       let context = {};
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({a: "b"});
+      assume(par.getTemplate()).deep.equals({a: "b"});
     });
 
     test("if -> then deep", function() {
@@ -109,7 +134,7 @@ suite("Parameterize", function() {
       let context = {};
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({b : {a: "a"}});
+      assume(par.getTemplate()).deep.equals({b : {a: "a"}});
     });
 
     test("if -> else deep", function() {
@@ -123,7 +148,7 @@ suite("Parameterize", function() {
       let context = {};
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({b: {a: "b"}});
+      assume(par.getTemplate()).deep.equals({b: {a: "b"}});
     });
 
     test("switch with only one option", function() {
@@ -135,7 +160,7 @@ suite("Parameterize", function() {
       let context = {a: "1"};
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({a: "foo"});
+      assume(par.getTemplate()).deep.equals({a: "foo"});
     });
 
     test("switch with multiple options", function() {
@@ -148,7 +173,7 @@ suite("Parameterize", function() {
       let context = {a: "1", b: "2"};
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals({a: "bar"});
+      assume(par.getTemplate()).deep.equals({a: "bar"});
     });
 
     test("eval with multiple function evaluations", function() {
@@ -175,7 +200,46 @@ suite("Parameterize", function() {
       };
       let par = new Parameterize(template, context);
       par.render();
-      assume(par.gettemplate()).deep.equals(output);
+      assume(par.getTemplate()).deep.equals(output);
+    });
+  });
+
+  suite("interface tests", function() {
+
+    test("template get/set methods", function() {
+      c1 = {a: {foo: "bar"}};
+      c2 = {a: {b: "c"}};
+      c3 = {d: {e: "f"}};
+      
+      var par = new Parameterize(c1, {});
+      assume(par.getTemplate()).deep.equals(c1);
+      
+      par.setNewTemplate(c2);
+      assume(par.getTemplate()).deep.not.equals(c1);
+      assume(par.getTemplate()).deep.equals(c2);
+      
+      par.setNewTemplate(c3);
+      assume(par.getTemplate()).deep.not.equals(c1);
+      assume(par.getTemplate()).deep.not.equals(c1);
+      assume(par.getTemplate()).deep.equals(c3);
+    });
+
+    test("context get/set methods", function() {
+      c1 = {a: {foo: "bar"}};
+      c2 = {a: {b: "c"}};
+      c3 = {d: {e: "f"}};
+      
+      var par = new Parameterize({}, c1);
+      assume(par.getContext()).deep.equals(c1);
+      
+      par.setNewContext(c2);
+      assume(par.getContext()).deep.not.equals(c1);
+      assume(par.getContext()).deep.equals(c2);
+      
+      par.setNewContext(c3);
+      assume(par.getContext()).deep.not.equals(c1);
+      assume(par.getContext()).deep.not.equals(c1);
+      assume(par.getContext()).deep.equals(c3);
     });
   });
 });

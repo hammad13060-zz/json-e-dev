@@ -1,9 +1,10 @@
 var safeEval = require("notevil")
+var _ = require("lodash");
 
 class Parameterize {
 	
 	constructor(template, context) {
-		this.template = template;
+		this.template = _.clone(template);
 		this.context = context;
 	}
 
@@ -120,8 +121,23 @@ class Parameterize {
 	}
 
 	/* public */
-	gettemplate() {
+	getTemplate() {
 		return this.template;
+	}
+
+	/* public */
+	getContext() {
+		return this.context;
+	}
+
+	/* public */
+	setNewTemplate(template) {
+		this.template = _.clone(template);
+	}
+
+	/* public */
+	setNewContext(context) {
+		this.context = context;
 	}
 };
 
