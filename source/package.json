@@ -14,7 +14,6 @@
     "notevil": "^1.0.0"
   },
   "devDependencies": {
-    "babel-core": "^6.21.0",
     "mocha": "^3.2.0"
   }
 }
